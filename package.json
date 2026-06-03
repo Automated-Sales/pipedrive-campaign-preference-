@@ -1,0 +1,19 @@
+{
+  "name": "pipedrive-preference-centre",
+  "version": "1.0.0",
+  "description": "Email preference centre for Pipedrive Campaigns using tokenised links.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "generate-token": "node scripts/generate-token.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
