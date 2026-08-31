@@ -32,11 +32,10 @@ requireEnv('PREFERENCES_FIELD_KEY', PREFERENCES_FIELD_KEY);
  * "Email Categories Subscribed To" multi-option Person field.
  */
 const CATEGORY_OPTIONS = [
+  { id: 541, slug: 'general-program-information', label: 'General Program Information' },
   { id: 505, slug: 'newsletters', label: 'Newsletters' },
-  { id: 506, slug: 'product-updates', label: 'Product updates' },
   { id: 507, slug: 'events', label: 'Events' },
-  { id: 508, slug: 'offers', label: 'Offers' },
-  { id: 509, slug: 'case-studies', label: 'Case studies' },
+  { id: 542, slug: 'courses-already-attended-apc', label: 'Courses Already Attended - APC' },
 ];
 
 const API_BASE = `https://${PIPEDRIVE_COMPANY_DOMAIN}.pipedrive.com/api/v1`;
