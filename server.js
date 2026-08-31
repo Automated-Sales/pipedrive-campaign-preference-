@@ -1,12 +1,18 @@
 require('dotenv').config();
+
 const express = require('express');
 const helmet = require('helmet');
+const path = require('path');
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 const {
   PIPEDRIVE_API_TOKEN,
@@ -123,6 +129,18 @@ async function updatePersonPreferences(personId, selectedOptionIds) {
   });
 }
 
+function renderBrandHeader() {
+  return `
+    <div class="brand">
+      <img src="/public/2b-logo.png" alt="2b Limitless logo">
+      <div class="brand-text">
+        <div class="eyebrow">2b Limitless</div>
+        <div class="brand-name">Email Preferences Centre</div>
+      </div>
+    </div>
+  `;
+}
+
 function renderPage({ token, person, selectedIds = [], success = false, error = '' }) {
   const title = 'Manage your email preferences';
   const safeName = person?.name ? escapeHtml(person.name) : 'there';
@@ -154,113 +172,254 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${title}</title>
   <style>
+    :root {
+      --brand: #a4c814;
+      --brand-dark: #82a00f;
+      --brand-soft: #f6f9e8;
+      --ink: #243043;
+      --muted: #667085;
+      --border: #e7eaf0;
+      --bg: #f5f7fa;
+      --white: #ffffff;
+      --success-bg: #ecfdf3;
+      --success-border: #abefc6;
+      --success-text: #067647;
+      --error-bg: #fef3f2;
+      --error-border: #fecdca;
+      --error-text: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f6f7f9;
-      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(164, 200, 20, 0.12), transparent 34%),
+        linear-gradient(180deg, #f7f9fc 0%, #f3f5f8 100%);
+      color: var(--ink);
       margin: 0;
     }
 
     .wrap {
-      max-width: 680px;
+      max-width: 760px;
       margin: 48px auto;
       padding: 0 20px;
     }
 
     .card {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 32px;
-      box-shadow: 0 8px 30px rgba(0,0,0,.06);
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 38px;
+      box-shadow: 0 18px 45px rgba(16, 24, 40, 0.08);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card::before {
+      content: "";
+      display: block;
+      height: 7px;
+      background: var(--brand);
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .brand img {
+      width: 72px;
+      height: auto;
+      display: block;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .eyebrow {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--brand-dark);
+    }
+
+    .brand-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
     }
 
     h1 {
-      margin: 0 0 12px;
-      font-size: 30px;
-      line-height: 1.15;
+      margin: 8px 0 10px;
+      font-size: 36px;
+      line-height: 1.1;
+      color: var(--ink);
     }
 
-    p {
-      line-height: 1.55;
-      color: #4b5563;
+    .intro {
+      line-height: 1.6;
+      color: var(--muted);
+      font-size: 17px;
+      margin-bottom: 20px;
+    }
+
+    .options {
+      margin-top: 8px;
+      border-top: 1px solid var(--border);
     }
 
     .option {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 14px 0;
-      border-top: 1px solid #eef0f3;
-      font-size: 17px;
+      gap: 14px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 18px;
+      color: var(--ink);
+      cursor: pointer;
     }
 
     .option input {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
+      accent-color: var(--brand);
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .option span {
+      line-height: 1.4;
     }
 
     .buttons {
       display: flex;
       gap: 12px;
-      margin-top: 24px;
+      margin-top: 28px;
       align-items: center;
     }
 
     button {
       border: 0;
-      border-radius: 10px;
-      padding: 13px 18px;
-      font-weight: 700;
+      border-radius: 12px;
+      padding: 14px 22px;
+      font-weight: 800;
       cursor: pointer;
-      background: #111827;
-      color: #fff;
+      background: var(--brand);
+      color: #1e293b;
       font-size: 16px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(164, 200, 20, 0.22);
+    }
+
+    button:hover {
+      background: var(--brand-dark);
+      color: #fff;
+      transform: translateY(-1px);
     }
 
     .small {
       font-size: 13px;
-      color: #6b7280;
-      margin-top: 22px;
+      color: var(--muted);
+      margin-top: 24px;
+      line-height: 1.6;
     }
 
     .notice {
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin: 18px 0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 18px 0 22px;
+      font-size: 15px;
+      line-height: 1.5;
     }
 
     .success {
-      background: #ecfdf5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
+      background: var(--success-bg);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
     }
 
     .error {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
+      background: var(--error-bg);
+      color: var(--error-text);
+      border: 1px solid var(--error-border);
+    }
+
+    @media (max-width: 640px) {
+      .wrap {
+        margin: 24px auto;
+      }
+
+      .card {
+        padding: 26px;
+        border-radius: 18px;
+      }
+
+      .brand {
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .brand img {
+        width: 56px;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      .intro {
+        font-size: 16px;
+      }
+
+      .option {
+        font-size: 16px;
+      }
+
+      button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="card">
+      ${renderBrandHeader()}
+
       <h1>${title}</h1>
-      <p>Hi ${safeName}, choose which types of emails you would like to receive.</p>
+      <p class="intro">Hi ${safeName}, choose which types of emails you would like to receive from 2b Limitless.</p>
+
       ${successHtml}
       ${errorHtml}
 
       <form method="post" action="/preferences">
         <input type="hidden" name="token" value="${escapeHtml(token)}">
-        ${checkboxes}
+
+        <div class="options">
+          ${checkboxes}
+        </div>
 
         <div class="buttons">
           <button type="submit">Save preferences</button>
         </div>
       </form>
 
-      <p class="small">To stop all marketing emails, use the unsubscribe link in the footer of the email you received.</p>
+      <p class="small">
+        To stop all marketing emails completely, please use the unsubscribe link in the footer of the email you received.
+      </p>
     </section>
   </main>
 </body>
@@ -273,39 +432,210 @@ function renderError(message) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Error</title>
+  <title>Preference centre</title>
   <style>
+    :root {
+      --brand: #a4c814;
+      --brand-dark: #82a00f;
+      --ink: #243043;
+      --muted: #667085;
+      --border: #e7eaf0;
+      --bg: #f5f7fa;
+      --white: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f6f7f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(164, 200, 20, 0.12), transparent 34%),
+        linear-gradient(180deg, #f7f9fc 0%, #f3f5f8 100%);
       margin: 0;
-      color: #1f2937;
+      color: var(--ink);
     }
 
     .card {
-      max-width: 620px;
+      max-width: 680px;
       margin: 60px auto;
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 32px;
-      box-shadow: 0 8px 30px rgba(0,0,0,.06);
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 34px;
+      box-shadow: 0 18px 45px rgba(16, 24, 40, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      display: block;
+      height: 7px;
+      background: var(--brand);
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .brand img {
+      width: 64px;
+      height: auto;
+      display: block;
+    }
+
+    .eyebrow {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--brand-dark);
+    }
+
+    h1 {
+      margin: 8px 0 12px;
+      font-size: 32px;
+      line-height: 1.15;
     }
 
     p {
-      color: #4b5563;
-      line-height: 1.55;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
   <section class="card">
+    <div class="brand">
+      <img src="/public/2b-logo.png" alt="2b Limitless logo">
+      <div>
+        <div class="eyebrow">2b Limitless</div>
+        <strong>Email Preferences Centre</strong>
+      </div>
+    </div>
     <h1>We couldn’t open your preferences</h1>
     <p>${escapeHtml(message)}</p>
   </section>
 </body>
 </html>`;
 }
+
+function renderHome() {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2b Limitless Preference Centre</title>
+  <style>
+    :root {
+      --brand: #a4c814;
+      --brand-dark: #82a00f;
+      --ink: #243043;
+      --muted: #667085;
+      --border: #e7eaf0;
+      --white: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(164, 200, 20, 0.12), transparent 34%),
+        linear-gradient(180deg, #f7f9fc 0%, #f3f5f8 100%);
+      color: var(--ink);
+      margin: 0;
+    }
+
+    .card {
+      max-width: 680px;
+      margin: 60px auto;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 34px;
+      box-shadow: 0 18px 45px rgba(16, 24, 40, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      display: block;
+      height: 7px;
+      background: var(--brand);
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .brand img {
+      width: 64px;
+      height: auto;
+      display: block;
+    }
+
+    .eyebrow {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--brand-dark);
+    }
+
+    h1 {
+      margin: 8px 0 12px;
+      font-size: 32px;
+      line-height: 1.15;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <section class="card">
+    <div class="brand">
+      <img src="/public/2b-logo.png" alt="2b Limitless logo">
+      <div>
+        <div class="eyebrow">2b Limitless</div>
+        <strong>Email Preferences Centre</strong>
+      </div>
+    </div>
+    <h1>Email preferences</h1>
+    <p>Please use the personalised preference link from the email you received to manage your email preferences.</p>
+  </section>
+</body>
+</html>`;
+}
+
+app.get('/', (req, res) => {
+  res.send(renderHome());
+});
 
 app.get('/health', (req, res) => {
   res.json({ ok: true });
