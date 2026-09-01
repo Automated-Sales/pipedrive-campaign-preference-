@@ -287,7 +287,15 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       line-height: 1.6;
       color: var(--muted);
       font-size: 17px;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
+    }
+
+    .intro-strong {
+      line-height: 1.6;
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 700;
+      margin: 0 0 24px;
     }
 
     .preference-section {
@@ -308,14 +316,6 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       font-size: 18px;
       line-height: 1.3;
       color: var(--ink);
-    }
-
-    .list-instruction {
-      margin: 0 0 16px;
-      line-height: 1.6;
-      color: var(--ink);
-      font-size: 16px;
-      font-weight: 700;
     }
 
     .options {
@@ -426,7 +426,8 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
         font-size: 30px;
       }
 
-      .intro {
+      .intro,
+      .intro-strong {
         font-size: 16px;
       }
 
@@ -436,10 +437,6 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
 
       .section-title {
         font-size: 17px;
-      }
-
-      .list-instruction {
-        font-size: 15px;
       }
 
       .option {
@@ -463,6 +460,10 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
         We’re sorry that you need to hear from us less, but we understand. Life is busy, and sometimes you just need to create some space.
       </p>
 
+      <p class="intro-strong">
+        Please choose from the email categories below and untick the ones you would like to unsubscribe from.
+      </p>
+
       ${successHtml}
       ${errorHtml}
 
@@ -478,11 +479,6 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
 
         <div class="preference-section highlight">
           <h2 class="section-title">Courses already attended</h2>
-
-          <p class="list-instruction">
-            Please untick any email categories you no longer wish to receive, and leave selected any categories you’re happy to continue receiving.
-          </p>
-
           <div class="options">
             ${courseCheckboxes}
           </div>
