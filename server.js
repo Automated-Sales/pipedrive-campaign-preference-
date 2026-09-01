@@ -42,6 +42,8 @@ const CATEGORY_OPTIONS = [
   { id: 505, slug: 'newsletters', label: 'Newsletters' },
   { id: 507, slug: 'events', label: 'Events' },
   { id: 542, slug: 'courses-already-attended-apc', label: 'Courses Already Attended - APC' },
+  { id: 543, slug: 'courses-already-attended-next-level-mastery', label: 'Courses Already Attended - Next Level Mastery' },
+  { id: 544, slug: 'courses-already-attended-next-level-velocity', label: 'Courses Already Attended - Next Level Velocity' },
 ];
 
 const API_BASE = `https://${PIPEDRIVE_COMPANY_DOMAIN}.pipedrive.com/api/v1`;
