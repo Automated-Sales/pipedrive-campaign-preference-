@@ -37,13 +37,21 @@ requireEnv('PREFERENCES_FIELD_KEY', PREFERENCES_FIELD_KEY);
  * These are the Pipedrive option IDs for the client's
  * "Email Categories Subscribed To" multi-option Person field.
  */
-const CATEGORY_OPTIONS = [
+const GENERAL_OPTIONS = [
   { id: 541, slug: 'general-program-information', label: 'General Program Information' },
   { id: 505, slug: 'newsletters', label: 'Newsletters' },
   { id: 507, slug: 'events', label: 'Events' },
+];
+
+const COURSE_OPTIONS = [
   { id: 542, slug: 'courses-already-attended-apc', label: 'Courses Already Attended - APC' },
   { id: 543, slug: 'courses-already-attended-next-level-mastery', label: 'Courses Already Attended - Next Level Mastery' },
   { id: 544, slug: 'courses-already-attended-next-level-velocity', label: 'Courses Already Attended - Next Level Velocity' },
+];
+
+const CATEGORY_OPTIONS = [
+  ...GENERAL_OPTIONS,
+  ...COURSE_OPTIONS,
 ];
 
 const API_BASE = `https://${PIPEDRIVE_COMPANY_DOMAIN}.pipedrive.com/api/v1`;
@@ -143,11 +151,8 @@ function renderBrandHeader() {
   `;
 }
 
-function renderPage({ token, person, selectedIds = [], success = false, error = '' }) {
-  const title = 'Manage your email preferences';
-  const safeName = person?.name ? escapeHtml(person.name) : 'there';
-
-  const checkboxes = CATEGORY_OPTIONS.map((option) => {
+function renderCheckboxes(options, selectedIds = []) {
+  return options.map((option) => {
     const optionId = String(option.id);
     const checked = selectedIds.includes(optionId) ? 'checked' : '';
 
@@ -158,6 +163,13 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       </label>
     `;
   }).join('');
+}
+
+function renderPage({ token, person, selectedIds = [], success = false, error = '' }) {
+  const title = 'Manage your email preferences';
+
+  const generalCheckboxes = renderCheckboxes(GENERAL_OPTIONS, selectedIds);
+  const courseCheckboxes = renderCheckboxes(COURSE_OPTIONS, selectedIds);
 
   const successHtml = success
     ? `<div class="notice success">Your email preferences have been updated.</div>`
@@ -275,11 +287,31 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       line-height: 1.6;
       color: var(--muted);
       font-size: 17px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+    }
+
+    .preference-section {
+      margin-top: 22px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      background: #ffffff;
+    }
+
+    .preference-section.highlight {
+      background: var(--brand-soft);
+      border-color: rgba(164, 200, 20, 0.45);
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 18px;
+      line-height: 1.3;
+      color: var(--ink);
     }
 
     .list-instruction {
-      margin: 24px 0 12px;
+      margin: 0 0 16px;
       line-height: 1.6;
       color: var(--ink);
       font-size: 16px;
@@ -287,7 +319,6 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
     }
 
     .options {
-      margin-top: 8px;
       border-top: 1px solid var(--border);
     }
 
@@ -300,6 +331,11 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       font-size: 18px;
       color: var(--ink);
       cursor: pointer;
+    }
+
+    .option:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
     }
 
     .option input {
@@ -394,6 +430,14 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
         font-size: 16px;
       }
 
+      .preference-section {
+        padding: 16px;
+      }
+
+      .section-title {
+        font-size: 17px;
+      }
+
       .list-instruction {
         font-size: 15px;
       }
@@ -425,12 +469,23 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       <form method="post" action="/preferences">
         <input type="hidden" name="token" value="${escapeHtml(token)}">
 
-        <p class="list-instruction">
-          Please untick any email categories you no longer wish to receive, and leave selected any categories you’re happy to continue receiving.
-        </p>
+        <div class="preference-section">
+          <h2 class="section-title">General email preferences</h2>
+          <div class="options">
+            ${generalCheckboxes}
+          </div>
+        </div>
 
-        <div class="options">
-          ${checkboxes}
+        <div class="preference-section highlight">
+          <h2 class="section-title">Courses already attended</h2>
+
+          <p class="list-instruction">
+            Please untick any email categories you no longer wish to receive, and leave selected any categories you’re happy to continue receiving.
+          </p>
+
+          <div class="options">
+            ${courseCheckboxes}
+          </div>
         </div>
 
         <div class="buttons">
