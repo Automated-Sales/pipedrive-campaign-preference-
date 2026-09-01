@@ -278,6 +278,14 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       margin-bottom: 20px;
     }
 
+    .list-instruction {
+      margin: 24px 0 12px;
+      line-height: 1.6;
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
     .options {
       margin-top: 8px;
       border-top: 1px solid var(--border);
@@ -386,6 +394,10 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
         font-size: 16px;
       }
 
+      .list-instruction {
+        font-size: 15px;
+      }
+
       .option {
         font-size: 16px;
       }
@@ -402,19 +414,20 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       ${renderBrandHeader()}
 
       <h1>${title}</h1>
-      <p class="intro">
-  We’re sorry that you need to hear from us less, but we understand. Life is busy, and sometimes you just need to create some space.
-</p>
 
-<p class="intro">
-  Please untick any email categories you no longer wish to receive, and leave selected any categories you’re happy to continue receiving.
-</p>
+      <p class="intro">
+        We’re sorry that you need to hear from us less, but we understand. Life is busy, and sometimes you just need to create some space.
+      </p>
 
       ${successHtml}
       ${errorHtml}
 
       <form method="post" action="/preferences">
         <input type="hidden" name="token" value="${escapeHtml(token)}">
+
+        <p class="list-instruction">
+          Please untick any email categories you no longer wish to receive, and leave selected any categories you’re happy to continue receiving.
+        </p>
 
         <div class="options">
           ${checkboxes}
@@ -426,8 +439,8 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       </form>
 
       <p class="small">
-  Please be aware that we cannot unsubscribe you from transactional emails or emails relating to a programme you are currently on.
-</p>
+        Please be aware that we cannot unsubscribe you from transactional emails or emails relating to a programme you are currently on.
+      </p>
     </section>
   </main>
 </body>
