@@ -44,9 +44,9 @@ const GENERAL_OPTIONS = [
 ];
 
 const COURSE_OPTIONS = [
-  { id: 542, slug: 'courses-already-attended-apc', label: 'Courses Already Attended - APC' },
-  { id: 543, slug: 'courses-already-attended-next-level-mastery', label: 'Courses Already Attended - Next Level Mastery' },
-  { id: 544, slug: 'courses-already-attended-next-level-velocity', label: 'Courses Already Attended - Next Level Velocity' },
+  { id: 542, slug: 'courses-already-attended-apc', label: 'APC' },
+  { id: 543, slug: 'courses-already-attended-next-level-mastery', label: 'Next Level Mastery' },
+  { id: 544, slug: 'courses-already-attended-next-level-velocity', label: 'Next Level Velocity' },
 ];
 
 const CATEGORY_OPTIONS = [
