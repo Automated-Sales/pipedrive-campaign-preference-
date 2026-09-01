@@ -400,7 +400,13 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       ${renderBrandHeader()}
 
       <h1>${title}</h1>
-      <p class="intro">Hi ${safeName}, choose which types of emails you would like to receive from 2b Limitless.</p>
+      <p class="intro">
+  We’re sorry that you need to hear from us less, but we understand. Life is busy, and sometimes you just need to create some space.
+</p>
+
+<p class="intro">
+  Please untick any email categories you no longer wish to receive, and leave selected any categories you’re happy to continue receiving.
+</p>
 
       ${successHtml}
       ${errorHtml}
@@ -418,8 +424,8 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       </form>
 
       <p class="small">
-        To stop all marketing emails completely, please use the unsubscribe link in the footer of the email you received.
-      </p>
+  Please be aware that we cannot unsubscribe you from transactional emails or emails relating to a programme you are currently on.
+</p>
     </section>
   </main>
 </body>
