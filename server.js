@@ -38,7 +38,7 @@ requireEnv('PREFERENCES_FIELD_KEY', PREFERENCES_FIELD_KEY);
  * "Email Categories Subscribed To" multi-option Person field.
  */
 const GENERAL_OPTIONS = [
-  { id: 541, slug: 'general-program-information', label: 'General Program Information' },
+  { id: 541, slug: 'general-programme-information', label: 'General Programme Information' },
   { id: 505, slug: 'newsletters', label: 'Newsletters' },
   { id: 507, slug: 'events', label: 'Events' },
 ];
@@ -144,8 +144,7 @@ function renderBrandHeader() {
     <div class="brand">
       <img src="/public/2b-logo.png" alt="2b Limitless logo">
       <div class="brand-text">
-        <div class="eyebrow">2b Limitless</div>
-        <div class="brand-name">Email Preferences Centre</div>
+        <div class="brand-name">Communications Preferences Centre</div>
       </div>
     </div>
   `;
@@ -184,7 +183,7 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${title}</title>
+  <title>Communications Preferences Centre</title>
   <style>
     :root {
       --brand: #a4c814;
@@ -260,14 +259,6 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       display: flex;
       flex-direction: column;
       gap: 3px;
-    }
-
-    .eyebrow {
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--brand-dark);
     }
 
     .brand-name {
@@ -461,7 +452,7 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       </p>
 
       <p class="intro-strong">
-        Please choose from the email categories below and untick the ones you would like to unsubscribe from.
+        Please review the email categories below and untick the ones you would like to unsubscribe from.
       </p>
 
       ${successHtml}
@@ -478,7 +469,7 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
         </div>
 
         <div class="preference-section highlight">
-          <h2 class="section-title">Courses already attended</h2>
+          <h2 class="section-title">Programmes already attended</h2>
           <div class="options">
             ${courseCheckboxes}
           </div>
@@ -490,7 +481,7 @@ function renderPage({ token, person, selectedIds = [], success = false, error = 
       </form>
 
       <p class="small">
-        Please be aware that we cannot unsubscribe you from transactional emails or emails relating to a programme you are currently on.
+        Please be aware that we cannot unsubscribe you from transactional emails or emails relating to a programme you are currently enrolled in.
       </p>
     </section>
   </main>
@@ -504,7 +495,7 @@ function renderError(message) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Preference centre</title>
+  <title>Communications Preferences Centre</title>
   <style>
     :root {
       --brand: #a4c814;
@@ -565,12 +556,10 @@ function renderError(message) {
       display: block;
     }
 
-    .eyebrow {
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--brand-dark);
+    .brand-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
     }
 
     h1 {
@@ -590,10 +579,7 @@ function renderError(message) {
   <section class="card">
     <div class="brand">
       <img src="/public/2b-logo.png" alt="2b Limitless logo">
-      <div>
-        <div class="eyebrow">2b Limitless</div>
-        <strong>Email Preferences Centre</strong>
-      </div>
+      <div class="brand-name">Communications Preferences Centre</div>
     </div>
     <h1>We couldn’t open your preferences</h1>
     <p>${escapeHtml(message)}</p>
@@ -608,7 +594,7 @@ function renderHome() {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>2b Limitless Preference Centre</title>
+  <title>Communications Preferences Centre</title>
   <style>
     :root {
       --brand: #a4c814;
@@ -668,12 +654,10 @@ function renderHome() {
       display: block;
     }
 
-    .eyebrow {
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--brand-dark);
+    .brand-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
     }
 
     h1 {
@@ -693,13 +677,10 @@ function renderHome() {
   <section class="card">
     <div class="brand">
       <img src="/public/2b-logo.png" alt="2b Limitless logo">
-      <div>
-        <div class="eyebrow">2b Limitless</div>
-        <strong>Email Preferences Centre</strong>
-      </div>
+      <div class="brand-name">Communications Preferences Centre</div>
     </div>
-    <h1>Email preferences</h1>
-    <p>Please use the personalised preference link from the email you received to manage your email preferences.</p>
+    <h1>Communications preferences</h1>
+    <p>Please use the personalised preference link from the email you received to manage your communications preferences.</p>
   </section>
 </body>
 </html>`;
