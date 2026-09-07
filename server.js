@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 
@@ -19,6 +20,7 @@ const {
   PIPEDRIVE_COMPANY_DOMAIN,
   TOKEN_FIELD_KEY,
   PREFERENCES_FIELD_KEY,
+  WEBHOOK_SECRET,
   PORT = 8080,
 } = process.env;
 
@@ -32,6 +34,7 @@ requireEnv('PIPEDRIVE_API_TOKEN', PIPEDRIVE_API_TOKEN);
 requireEnv('PIPEDRIVE_COMPANY_DOMAIN', PIPEDRIVE_COMPANY_DOMAIN);
 requireEnv('TOKEN_FIELD_KEY', TOKEN_FIELD_KEY);
 requireEnv('PREFERENCES_FIELD_KEY', PREFERENCES_FIELD_KEY);
+requireEnv('WEBHOOK_SECRET', WEBHOOK_SECRET);
 
 /**
  * These are the Pipedrive option IDs for the client's
@@ -86,8 +89,52 @@ function parseSetValue(rawValue) {
     .filter(Boolean);
 }
 
-async function pipedriveRequest(path, options = {}) {
-  const url = new URL(`${API_BASE}${path}`);
+function personHasEmail(person = {}) {
+  const email = person.email;
+
+  if (!email) return false;
+
+  if (Array.isArray(email)) {
+    return email.some((item) => {
+      if (typeof item === 'string') {
+        return item.trim().length > 0;
+      }
+
+      return String(item?.value || '').trim().length > 0;
+    });
+  }
+
+  return String(email).trim().length > 0;
+}
+
+function getSecretFromRequest(req) {
+  return String(
+    req.query.secret ||
+    req.headers['x-webhook-secret'] ||
+    req.headers['x-admin-secret'] ||
+    ''
+  ).trim();
+}
+
+function isAuthorisedRequest(req) {
+  const suppliedSecret = getSecretFromRequest(req);
+  return suppliedSecret && suppliedSecret === WEBHOOK_SECRET;
+}
+
+function extractPersonIdFromWebhook(body = {}) {
+  return (
+    body?.data?.id ||
+    body?.current?.id ||
+    body?.id ||
+    body?.person_id ||
+    body?.meta?.entity_id ||
+    body?.meta?.entityId ||
+    null
+  );
+}
+
+async function pipedriveRequest(apiPath, options = {}) {
+  const url = new URL(`${API_BASE}${apiPath}`);
   url.searchParams.set('api_token', PIPEDRIVE_API_TOKEN);
 
   const response = await fetch(url, {
@@ -137,6 +184,141 @@ async function updatePersonPreferences(personId, selectedOptionIds) {
       [PREFERENCES_FIELD_KEY]: value,
     }),
   });
+}
+
+async function ensurePreferenceTokenForPerson(personId) {
+  if (!personId) {
+    return {
+      ok: false,
+      action: 'missing_person_id',
+    };
+  }
+
+  const personResult = await pipedriveRequest(`/persons/${personId}`);
+  const person = personResult?.data;
+
+  if (!person) {
+    return {
+      ok: false,
+      action: 'person_not_found',
+      personId,
+    };
+  }
+
+  const existingToken = String(person[TOKEN_FIELD_KEY] || '').trim();
+
+  if (existingToken) {
+    return {
+      ok: true,
+      action: 'token_already_exists',
+      personId,
+    };
+  }
+
+  if (!personHasEmail(person)) {
+    return {
+      ok: true,
+      action: 'skipped_no_email',
+      personId,
+    };
+  }
+
+  const newToken = crypto.randomUUID();
+
+  await pipedriveRequest(`/persons/${personId}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      [TOKEN_FIELD_KEY]: newToken,
+    }),
+  });
+
+  return {
+    ok: true,
+    action: 'token_created',
+    personId,
+  };
+}
+
+async function fillMissingTokens({ dryRun = false, maxCreated = 250 } = {}) {
+  let start = 0;
+  const pageLimit = 100;
+
+  const summary = {
+    ok: true,
+    dryRun,
+    scanned: 0,
+    peopleWithEmail: 0,
+    peopleWithoutEmail: 0,
+    existingTokens: 0,
+    missingTokens: 0,
+    tokensCreated: 0,
+    errors: [],
+    stoppedBecauseLimitReached: false,
+  };
+
+  while (start !== null && start !== undefined) {
+    const peopleResult = await pipedriveRequest(`/persons?start=${start}&limit=${pageLimit}`);
+    const people = peopleResult?.data || [];
+
+    for (const person of people) {
+      summary.scanned += 1;
+
+      const personId = person?.id;
+
+      if (!personHasEmail(person)) {
+        summary.peopleWithoutEmail += 1;
+        continue;
+      }
+
+      summary.peopleWithEmail += 1;
+
+      const existingToken = String(person[TOKEN_FIELD_KEY] || '').trim();
+
+      if (existingToken) {
+        summary.existingTokens += 1;
+        continue;
+      }
+
+      summary.missingTokens += 1;
+
+      if (dryRun) {
+        continue;
+      }
+
+      if (summary.tokensCreated >= maxCreated) {
+        summary.stoppedBecauseLimitReached = true;
+        return summary;
+      }
+
+      try {
+        const newToken = crypto.randomUUID();
+
+        await pipedriveRequest(`/persons/${personId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            [TOKEN_FIELD_KEY]: newToken,
+          }),
+        });
+
+        summary.tokensCreated += 1;
+      } catch (error) {
+        summary.errors.push({
+          personId,
+          error: error.message,
+        });
+      }
+    }
+
+    const pagination = peopleResult?.additional_data?.pagination;
+
+    if (pagination?.more_items_in_collection && pagination?.next_start !== undefined) {
+      start = pagination.next_start;
+    } else {
+      start = null;
+    }
+  }
+
+  return summary;
 }
 
 function renderBrandHeader() {
@@ -756,6 +938,73 @@ app.post('/preferences', async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).send(renderError('Something went wrong while saving your preferences.'));
+  }
+});
+
+/**
+ * Pipedrive webhook endpoint.
+ * Use this for Person created / Person updated webhooks.
+ */
+app.post('/webhooks/pipedrive/person', async (req, res) => {
+  try {
+    if (!isAuthorisedRequest(req)) {
+      return res.status(401).json({
+        ok: false,
+        error: 'Unauthorized',
+      });
+    }
+
+    const personId = extractPersonIdFromWebhook(req.body);
+    const result = await ensurePreferenceTokenForPerson(personId);
+
+    return res.json(result);
+  } catch (error) {
+    console.error('Pipedrive person webhook error:', error);
+
+    return res.status(500).json({
+      ok: false,
+      error: 'Something went wrong while processing the Pipedrive person webhook.',
+    });
+  }
+});
+
+/**
+ * Backup/safety endpoint.
+ * This scans Pipedrive and fills missing tokens for People with email addresses.
+ * Useful after bulk imports, in case Pipedrive does not fire normal webhooks for imported rows.
+ *
+ * Example:
+ * /admin/fill-missing-tokens?secret=YOUR_SECRET&dryRun=true
+ * /admin/fill-missing-tokens?secret=YOUR_SECRET
+ */
+app.get('/admin/fill-missing-tokens', async (req, res) => {
+  try {
+    if (!isAuthorisedRequest(req)) {
+      return res.status(401).json({
+        ok: false,
+        error: 'Unauthorized',
+      });
+    }
+
+    const dryRun = String(req.query.dryRun || '').toLowerCase() === 'true';
+    const maxCreatedRaw = Number(req.query.maxCreated || 250);
+    const maxCreated = Number.isFinite(maxCreatedRaw)
+      ? Math.min(Math.max(maxCreatedRaw, 1), 1000)
+      : 250;
+
+    const result = await fillMissingTokens({
+      dryRun,
+      maxCreated,
+    });
+
+    return res.json(result);
+  } catch (error) {
+    console.error('Fill missing tokens error:', error);
+
+    return res.status(500).json({
+      ok: false,
+      error: 'Something went wrong while filling missing tokens.',
+    });
   }
 });
 
